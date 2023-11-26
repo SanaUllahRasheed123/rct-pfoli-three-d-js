@@ -3,7 +3,7 @@ import {Canvas} from '@react-three/fiber'
 import {Suspense} from 'react'
 import Loader from '../components/Loader'
 import Island from '../models/Island'
-import  Sky  from '../models/Sky'
+import Sky from '../models/Sky'
 import Bird from '../models/Bird'
 import Plane from '../models/Plane'
 
@@ -52,8 +52,8 @@ camera={{near:0.1,far:1000}}
   scale = {islandScale}
   rotation = {islandRotation}
 />
-<Plane/>
 
+<Plane/>
 </Suspense>
 </Canvas>
 </section>
