@@ -6,17 +6,18 @@
 // Source: https://sketchfab.com/3d-models/foxs-islands-163b68e09fcc47618450150be7785907
 // Title: Fox's islands
 // */
-
-import { useRef, useEffect } from "react";
+import { a } from "@react-spring/three";
+import { useEffect, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
+
 import islandScene from "../assets/3d/island.glb";
-import { a } from "@react-spring/three";
 
-const Island = ({ isRotating, setisRotating, ...props }) => {
-    const islandRef = useRef();
+const Island = ({ isRotating, setisRotating,setCurrentStage,
+  currentFocusPoint, ...props }) => {
+  const islandRef = useRef();
 
-    const {gl,viewport} = useThree();
+  const {gl,viewport} = useThree();
   const { nodes, materials } = useGLTF(islandScene);
 
   const lastX = useRef(0);
@@ -35,13 +36,23 @@ const Island = ({ isRotating, setisRotating, ...props }) => {
     lastX.current = clientX
   }
 
-  const handlePointerUp = (e) =>{
+  const handlePointerUp = (e) => {
     e.stopPropagation();
     e.preventDefault();
     setisRotating(false);
 
-    
-  }
+    const clientX = e.touches
+    ? e.touches[0].clientX
+    : e.clientX;
+
+    const delta = (clientX-lastX.current) / viewport.width;
+    islandRef.current.rotation.y +=delta * 0.01 * Math.PI;
+    lastX.current = clientX;
+
+    rotationSpeed.current = delta * 0.01 * Math.PI;
+
+
+  };
   const handlePointerMove = (e) =>{
 
     e.stopPropagation();
@@ -52,29 +63,50 @@ const Island = ({ isRotating, setisRotating, ...props }) => {
     ? e.touches[0].clientX
     : e.clientX;
 
-    const delta = (clientX - lastX.current) / viewport.width
+    const delta = (clientX - lastX.current) / viewport.width;
 
-    islandRef.current.rotation.y += delta*0.01 * Math.PI;
-    rotationSpeed.current = delta * 0.01* Math.PI;
+    islandRef.current.rotation.y += delta * 0.01 * Math.PI;
+    lastX.current = clientX;
+    rotationSpeed.current = delta * 0.01 * Math.PI;
     }
 
-  }
+  };
 
-  const handleKeyDown = (e) =>{
+  const handleKeyDown = (e) => {
     if(e.key === 'ArrowLeft'){
       if(!isRotating) setisRotating(true);
-      islandRef.current.rotation.y +=0.01 * Math.PI;
+      islandRef.current.rotation.y += 0.01 * Math.PI;
     } else if(e.key === 'ArrowRight') {
       if(!isRotating) setisRotating(true);
       islandRef.current.rotation.y -= 0.01* Math.PI;
     }
-  }
+  };
 
-  const handleKeyUp  = (e) => {
+  const handleKeyUp = (e) => {
     if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
       setisRotating(false)
     }
-  }
+  };
+
+    useEffect(()=>{
+    const canvas = gl.domElement;
+    canvas.addEventListener('pointerdown',handlePointerDown);
+    canvas.addEventListener('pointerup',handlePointerUp);
+    canvas.addEventListener('pointermove',handlePointerMove);
+    document.addEventListener('keydown',handleKeyDown);
+    document.addEventListener('keyup',handleKeyUp);
+
+    return() =>{
+      canvas.removeEventListener('pointerdown',handlePointerDown);
+      canvas.removeEventListener('pointerup',handlePointerUp);
+      canvas.removeEventListener('pointermove',handlePointerMove);
+
+      document.removeEventListener('keydown',handleKeyDown);
+      document.removeEventListener('keyup',handleKeyUp);
+
+    }
+
+  },[gl,handlePointerDown,handlePointerUp,handlePointerMove]);
 
 useFrame(()=>{
  if(!isRotating){
@@ -110,39 +142,7 @@ switch (true) {
  }
 })
 
-  useEffect(()=>{
-    const canvas = gl.domElement;
-    canvas.addEventListener('pointerdown',handlePointerDown);
-    canvas.addEventListener('pointerup',handlePointerUp);
-    canvas.addEventListener('pointermove',handlePointerMove);
-    document.addEventListener('keydown',handleKeyDown);
-    document.addEventListener('keyup',handleKeyUp);
 
-    return() =>{
-      canvas.removeEventListener('pointerdown',handlePointerDown);
-      canvas.removeEventListener('pointerup',handlePointerUp);
-      canvas.removeEventListener('pointermove',handlePointerMove);
-
-      document.removeEventListener('keydown',handleKeyDown);
-      document.removeEventListener('keyup',handleKeyUp);
-
-    }
-
-  },[gl,handlePointerDown,handlePointerUp,handlePointerMove]);
-
-  
-
-  
-
-  
-  
-
- 
-
- 
-
- 
-  
 
   return (
     <a.group ref={islandRef} {...props}>
@@ -161,6 +161,7 @@ switch (true) {
       <mesh
         geometry={nodes.polySurface947_tree1_0.geometry}
         material={materials.PaletteMaterial001}
+        
       />
       <mesh
         geometry={nodes.polySurface948_tree_body_0.geometry}
